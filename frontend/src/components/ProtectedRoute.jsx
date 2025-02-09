@@ -9,8 +9,14 @@ function ProtectedRoute({ children }) {
     const [isAuthorized, setIsAuthorized] = useState(null);
 
     useEffect(() => {
-        auth().catch(() => setIsAuthorized(false))
-    }, [])
+        auth().catch(() => handleLogout());
+    }, []);
+
+    const handleLogout = () => {
+        localStorage.removeItem(ACCESS_TOKEN);
+        localStorage.removeItem(REFRESH_TOKEN);
+        setIsAuthorized(false);
+    };
 
     const refreshToken = async () => {
         const refreshToken = localStorage.getItem(REFRESH_TOKEN);
@@ -19,21 +25,22 @@ function ProtectedRoute({ children }) {
                 refresh: refreshToken,
             });
             if (res.status === 200) {
-                localStorage.setItem(ACCESS_TOKEN, res.data.access)
-                setIsAuthorized(true)
+                localStorage.setItem(ACCESS_TOKEN, res.data.access);
+                setIsAuthorized(true);
             } else {
-                setIsAuthorized(false)
+                handleLogout();
             }
         } catch (error) {
             console.log(error);
-            setIsAuthorized(false);
+            handleLogout();
         }
     };
+
 
     const auth = async () => {
         const token = localStorage.getItem(ACCESS_TOKEN);
         if (!token) {
-            setIsAuthorized(false);
+            handleLogout();
             return;
         }
         const decoded = jwtDecode(token);
